@@ -24,7 +24,16 @@
       --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
       --max-width: 1000px;
       --header-height: 70px;
-      /* Add banner height variable if needed or keep dynamic */
+    }
+
+    [data-theme="dark"] {
+      --bg: #121212;
+      --surface: #1E1E1E;
+      --text-main: #E0E0E0;
+      --text-muted: #A0A0A0;
+      --border: #333333;
+      --primary-soft: rgba(216, 67, 21, 0.15);
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
     * {
@@ -38,6 +47,7 @@
       font-family: 'Outfit', sans-serif;
       color: var(--text-main);
       padding-bottom: 80px;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     header.appbar {
@@ -102,7 +112,7 @@
       align-items: center;
       gap: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-      transition: all 0.3s ease;
+      transition: all 0.3s ease, background-color 0.3s ease;
     }
 
     .search-box:focus-within {
@@ -147,7 +157,7 @@
       cursor: pointer;
       color: var(--text-muted);
       font-weight: 500;
-      transition: all 0.2s;
+      transition: all 0.2s, background-color 0.3s ease;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -199,7 +209,7 @@
       padding: 16px;
       text-align: center;
       box-shadow: var(--card-shadow);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
       border: 1px solid transparent;
       position: relative;
       overflow: hidden;
@@ -217,7 +227,7 @@
       border-radius: 12px;
       overflow: hidden;
       margin-bottom: 12px;
-      background: #f1f1f1;
+      background: var(--bg);
     }
 
     .card-img {
@@ -464,8 +474,75 @@
     .social-btn:hover {
       background: var(--bg);
       color: #E1306C;
-      transform: scale(1.05);
       border-color: #E1306C;
+    }
+
+    /* Theme Toggle Button */
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background-color: var(--bg);
+    }
+
+    .theme-toggle svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.5s ease;
+    }
+
+    [data-theme="dark"] .theme-toggle .sun-icon {
+      display: none;
+    }
+
+    [data-theme="light"] .theme-toggle .moon-icon {
+      display: none;
+    }
+
+    /* Default handling if no attribute set (light mode default in CSS via variables) */
+    :root:not([data-theme="dark"]) .theme-toggle .sun-icon {
+      display: none;
+      /* Show moon by default for light mode */
+    }
+
+    :root:not([data-theme="dark"]) .theme-toggle .moon-icon {
+      display: block;
+    }
+
+    /* Correct logic: 
+       Light Mode -> Show Moon (to switch to dark)
+       Dark Mode -> Show Sun (to switch to light)
+    */
+
+    [data-theme="light"] .moon-icon {
+      display: block;
+    }
+
+    [data-theme="light"] .sun-icon {
+      display: none;
+    }
+
+    [data-theme="dark"] .moon-icon {
+      display: none;
+    }
+
+    [data-theme="dark"] .sun-icon {
+      display: block;
     }
   </style>
 </head>
@@ -480,6 +557,24 @@
         <span>Lezzet Menüsü</span>
       </div>
     </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Karanlık Modu Aç/Kapa">
+      <!-- Sun Icon -->
+      <svg class="sun-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <!-- Moon Icon -->
+      <svg class="moon-icon" viewBox="0 0 24 24">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
   </header>
 
   <div class="search-container">
@@ -699,7 +794,49 @@
     renderCategories();
     renderProducts();
 
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const rootElement = document.documentElement;
+    const sunIcon = themeToggleBtn.querySelector('.sun-icon');
+    const moonIcon = themeToggleBtn.querySelector('.moon-icon');
+
+    // Check saved preference or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+    // Set initial theme
+    const initialTheme = savedTheme || systemTheme;
+    rootElement.setAttribute('data-theme', initialTheme);
+    if (initialTheme === 'dark') {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'inline-block';
+    } else {
+      sunIcon.style.display = 'inline-block';
+      moonIcon.style.display = 'none';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = rootElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+      rootElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+
+      // Toggle icon visibility
+      if (newTheme === 'dark') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'inline-block';
+        moonIcon.style.transform = 'rotate(360deg)';
+        setTimeout(() => moonIcon.style.transform = '', 500);
+      } else {
+        sunIcon.style.display = 'inline-block';
+        moonIcon.style.display = 'none';
+        sunIcon.style.transform = 'rotate(360deg)';
+        setTimeout(() => sunIcon.style.transform = '', 500);
+      }
+    });
   </script>
 </body>
 
 </html>
+```
